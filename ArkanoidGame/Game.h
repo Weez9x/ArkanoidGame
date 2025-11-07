@@ -11,7 +11,8 @@ namespace Arkanoid
 		None,
 		MainMenu,
 		Playing,
-		GameOver
+		GameOver,
+		GameWin
 	};
 
 	class Game

@@ -10,14 +10,8 @@ namespace Arkanoid
 		shape.setFillColor(sf::Color::Red);
 	}
 
-	void Brick::draw(sf::RenderWindow& window) const
+	void Brick::destroy()
 	{
-		if (!destroyed)
-			window.draw(shape);
-	}
-
-	sf::FloatRect Brick::getBounds() const
-	{
-		return shape.getGlobalBounds();
+		active = false;
 	}
 }

@@ -20,6 +20,8 @@ namespace Arkanoid
 
 		bool isGameOver = false;
 		bool requestToMainMenu = false;
+		bool isWin = false;
+
 
 		void buildBricks();
 
@@ -34,5 +36,6 @@ namespace Arkanoid
 
 		bool gameOver() const { return isGameOver; }
 		bool shouldGoToMainMenu() const { return requestToMainMenu; }
+		bool gameWin() const { return isWin; }
 	};
 }

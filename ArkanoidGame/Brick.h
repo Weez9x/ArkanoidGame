@@ -1,20 +1,13 @@
 #pragma once
-#include <SFML/Graphics.hpp>
+#include "GameObject.h"
 
 namespace Arkanoid
 {
-	class Brick
+	class Brick : public GameObject
 	{
-	private:
-		sf::RectangleShape shape;
-		bool destroyed = false;
-
 	public:
 		Brick(float x, float y, float width, float height);
 
-		void draw(sf::RenderWindow& window) const;
-		sf::FloatRect getBounds() const;
-		bool isDestroyed() const { return destroyed; }
-		void destroy() { destroyed = true; }
+		void destroy();
 	};
 }

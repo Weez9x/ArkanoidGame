@@ -2,6 +2,7 @@
 #include "GameStateMainMenu.h"
 #include "GameStatePlaying.h"
 #include "GameStateGameOver.h"
+#include "GameStateWin.h"
 
 namespace Arkanoid
 {
@@ -30,6 +31,9 @@ namespace Arkanoid
 			break;
 		case StateType::GameOver:
 			currentState = std::make_unique<GameStateGameOver>();
+			break;
+		case StateType::GameWin:
+			currentState = std::make_unique<GameStateWin>();
 			break;
 		default:
 			currentState = nullptr;
@@ -97,6 +101,18 @@ namespace Arkanoid
 				}
 			}
 		}
+		else if (currentType == StateType::GameWin)
+		{
+			auto* win = dynamic_cast<GameStateWin*>(currentState.get());
+			if (win)
+			{
+				if (win->shouldRestart())
+					changeStateInternal(StateType::Playing);
+				else if (win->shouldGoMenu())
+					changeStateInternal(StateType::MainMenu);
+			}
+		}
+
 	}
 
 	void Game::update(float dt)
@@ -112,6 +128,18 @@ namespace Arkanoid
 				changeStateInternal(StateType::GameOver);
 			}
 		}
+		if (currentType == StateType::Playing)
+		{
+			auto* play = dynamic_cast<GameStatePlaying*>(currentState.get());
+			if (play)
+			{
+				if (play->gameOver())
+					changeStateInternal(StateType::GameOver);
+				else if (play->gameWin())
+					changeStateInternal(StateType::GameWin);
+			}
+		}
+
 	}
 
 	void Game::draw(sf::RenderWindow& window)

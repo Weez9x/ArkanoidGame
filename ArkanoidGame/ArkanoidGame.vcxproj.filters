@@ -37,6 +37,9 @@
     <ClCompile Include="GameState.h">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="GameStateWin.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -66,5 +69,9 @@
     <ClInclude Include="Platform.h">
       <Filter>Sources</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="GameStateWin.h" />
   </ItemGroup>
 </Project>

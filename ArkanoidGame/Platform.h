@@ -1,22 +1,18 @@
-// Platform.h
 #pragma once
-#include <SFML/Graphics.hpp>
+#include "GameObject.h"
 #include "GameSettings.h"
+#include <SFML/Window/Keyboard.hpp>
 
 namespace Arkanoid
 {
-	class Platform
+	class Platform : public GameObject
 	{
 	private:
-		sf::RectangleShape shape;
 		float speed;
 
 	public:
 		Platform(float x, float y);
 
-		void update(float dt);
-		void draw(sf::RenderWindow& window) const;
-		sf::FloatRect getBounds() const;
-		void reset();
+		void update(float dt) override;
 	};
 }
