@@ -38,7 +38,7 @@ namespace Arkanoid
 
 	void GameStatePlaying::update(float dt)
 	{
-		if (isGameOver) return;
+		if (isGameOver || isWin) return;
 
 		platform.update(dt);
 		ball.update(dt, platform.getBounds());
@@ -47,7 +47,7 @@ namespace Arkanoid
 
 		for (auto& brick : bricks)
 		{
-			if (brick.isDestroyed())
+			if (!brick.isActive())
 				continue;
 
 			auto brickBounds = brick.getBounds();
@@ -71,12 +71,10 @@ namespace Arkanoid
 				float overlapTop = ballBottom - brickTop;
 				float overlapBottom = brickBottom - ballTop;
 
-
-				bool ballFromLeft = std::abs(overlapLeft) < std::abs(overlapRight);
-				bool ballFromTop = std::abs(overlapTop) < std::abs(overlapBottom);
-
-				float minOverlapX = ballFromLeft ? overlapLeft : -overlapRight;
-				float minOverlapY = ballFromTop ? overlapTop : -overlapBottom;
+				bool fromLeft = std::abs(overlapLeft) < std::abs(overlapRight);
+				bool fromTop = std::abs(overlapTop) < std::abs(overlapBottom);
+				float minOverlapX = fromLeft ? overlapLeft : -overlapRight;
+				float minOverlapY = fromTop ? overlapTop : -overlapBottom;
 
 				if (std::abs(minOverlapX) < std::abs(minOverlapY))
 				{
@@ -93,9 +91,25 @@ namespace Arkanoid
 			}
 		}
 
+		// Проверяем победу
+		bool allDestroyed = true;
+		for (const auto& brick : bricks)
+		{
+			if (brick.isActive())
+			{
+				allDestroyed = false;
+				break;
+			}
+		}
+		if (allDestroyed)
+		{
+			isWin = true;
+		}
+
 		if (ball.lost())
 			isGameOver = true;
 	}
+
 
 	void GameStatePlaying::draw(sf::RenderWindow& window)
 	{
@@ -114,8 +128,24 @@ namespace Arkanoid
 	{
 		bricks.clear();
 		const float xStart = 60.f;
+		// Новый механизм построения кирпичей(Выглядит лучше)
 		const float gap = 5.f;
+		float totalWidth = BRICK_COLUMNS * BRICK_WIDTH + (BRICK_COLUMNS - 1) * gap;
+		float startX = (SCREEN_WIDTH - totalWidth) / 2.f + BRICK_WIDTH / 2.f;
+		float startY = 80.f;
+
 		for (int i = 0; i < BRICK_ROWS; ++i)
+		{
+			for (int j = 0; j < BRICK_COLUMNS; ++j)
+			{
+				float x = startX + j * (BRICK_WIDTH + gap);
+				float y = startY + i * (BRICK_HEIGHT + gap);
+				int typeIndex = i % 5;
+				bricks.emplace_back(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex);
+			}
+		}
+		//Старый механизм построения кирпичей
+		/*for (int i = 0; i < BRICK_ROWS; ++i)
 		{
 			for (int j = 0; j < BRICK_COLUMNS; ++j)
 			{
@@ -123,6 +153,6 @@ namespace Arkanoid
 				float y = 50.f + i * (BRICK_HEIGHT + gap) + BRICK_HEIGHT * 0.5f;
 				bricks.emplace_back(x, y, BRICK_WIDTH, BRICK_HEIGHT);
 			}
-		}
+		}*/
 	}
 }

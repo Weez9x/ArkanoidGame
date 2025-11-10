@@ -1,20 +1,20 @@
 #pragma once
-#include <SFML/Graphics.hpp>
+#include "GameObject.h"
+#include <vector>
 
 namespace Arkanoid
 {
-	class Brick
+	class Brick : public GameObject
 	{
 	private:
-		sf::RectangleShape shape;
-		bool destroyed = false;
+		static std::vector<sf::Texture> textures; // общий набор текстур для всех блоков
+		int type = 0; // индекс используемой текстуры
 
 	public:
-		Brick(float x, float y, float width, float height);
+		Brick(float x, float y, float width, float height, int typeIndex);
+		void destroy();
 
-		void draw(sf::RenderWindow& window) const;
-		sf::FloatRect getBounds() const;
-		bool isDestroyed() const { return destroyed; }
-		void destroy() { destroyed = true; }
+		static void loadTextures(); // загрузка набора текстур один раз
+		static void unloadTextures();//очистка текстур
 	};
 }
