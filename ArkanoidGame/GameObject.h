@@ -7,6 +7,7 @@ namespace Arkanoid
 	{
 	protected:
 		sf::RectangleShape shape;
+		sf::Texture texture;
 		bool active = true;
 
 	public:
@@ -27,5 +28,13 @@ namespace Arkanoid
 
 		bool isActive() const { return active; }
 		void deactivate() { active = false; }
+
+		void setTexture(const std::string& path)
+		{
+			if (texture.loadFromFile(path))
+			{
+				shape.setTexture(&texture);
+			}
+		}
 	};
 }

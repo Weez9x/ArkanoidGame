@@ -5,9 +5,10 @@ namespace Arkanoid
 	Ball::Ball(float x, float y)
 	{
 		shape.setSize({ BALL_RADIUS * 2, BALL_RADIUS * 2 });
-		shape.setFillColor(sf::Color::White);
+		//shape.setFillColor(sf::Color::White);
 		shape.setOrigin(BALL_RADIUS, BALL_RADIUS);
 		shape.setPosition(x, y);
+		setTexture(TEXTURES_PATH + "ball.png");
 		velocity = { BALL_SPEED, -BALL_SPEED };
 	}
 

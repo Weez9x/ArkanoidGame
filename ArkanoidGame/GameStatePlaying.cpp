@@ -140,7 +140,8 @@ namespace Arkanoid
 			{
 				float x = startX + j * (BRICK_WIDTH + gap);
 				float y = startY + i * (BRICK_HEIGHT + gap);
-				bricks.emplace_back(x, y, BRICK_WIDTH, BRICK_HEIGHT);
+				int typeIndex = i % 5;
+				bricks.emplace_back(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex);
 			}
 		}
 		//Старый механизм построения кирпичей

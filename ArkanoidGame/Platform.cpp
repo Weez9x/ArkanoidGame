@@ -6,9 +6,10 @@ namespace Arkanoid
 		: speed(PLATFORM_SPEED)
 	{
 		shape.setSize({ PLATFORM_WIDTH, PLATFORM_HEIGHT });
-		shape.setFillColor(sf::Color::Blue);
+		//shape.setFillColor(sf::Color::Blue);
 		shape.setOrigin(PLATFORM_WIDTH / 2.f, PLATFORM_HEIGHT / 2.f);
 		shape.setPosition(x, y);
+		setTexture(TEXTURES_PATH + "platform.png");
 	}
 
 	void Platform::update(float dt)
