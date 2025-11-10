@@ -23,7 +23,6 @@ namespace Arkanoid
 		for (size_t i = 0; i < textureNames.size(); ++i)
 		{
 			bool ok = textures[i].loadFromFile(TEXTURES_PATH + textureNames[i]);
-			// можно assert или логировать, но не фатально:
 			assert(ok && "Failed to load brick texture");
 		}
 	}

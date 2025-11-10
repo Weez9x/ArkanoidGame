@@ -11,7 +11,6 @@ namespace Arkanoid
 		int type = 0; // индекс используемой текстуры
 
 	public:
-		// Добавил значение по умолчанию для typeIndex — теперь можно вызывать с 4 аргументами
 		Brick(float x, float y, float width, float height, int typeIndex);
 		void destroy();
 
