@@ -12,7 +12,7 @@ namespace Arkanoid
 
 	public:
 		Brick(float x, float y, float width, float height, int typeIndex);
-		void destroy();
+		virtual void destroy();
 
 		static void loadTextures(); // загрузка набора текстур один раз
 		static void unloadTextures();//очистка текстур

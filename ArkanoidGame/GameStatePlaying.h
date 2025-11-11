@@ -1,4 +1,3 @@
-// GameStatePlaying.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -14,7 +13,7 @@ namespace Arkanoid
 	private:
 		Platform platform;
 		Ball ball;
-		std::vector<Brick> bricks;
+		std::vector<std::unique_ptr<GameObject>> bricks;
 		sf::Font font;
 		sf::Text infoText;
 

@@ -9,17 +9,19 @@ namespace Arkanoid
 	private:
 		sf::Vector2f velocity;
 		bool isLost = false;
+		float speed = 350.f;
 
 	public:
 		Ball(float x, float y);
-
 		void update(float dt, const sf::FloatRect& platformBounds);
 		void reset();
-
-		void reflectX() { velocity.x *= -1; }
-		void reflectY() { velocity.y *= -1; }
-
+		void normalizeSpeed();
+		void reflectX() { velocity.x *= -1; normalizeSpeed();}
+		void reflectY() { velocity.y *= -1; normalizeSpeed();}
 		bool lost() const { return isLost; }
-		void move(float dx, float dy) { shape.move(dx, dy); }
+		void move(float offsetX, float offsetY);
+		const sf::Vector2f& getVelocity() const { return velocity; }
+		float getSpeed() const { return std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y); }
+		void setVelocity(float vx, float vy) { velocity = { vx, vy }; }
 	};
 }
