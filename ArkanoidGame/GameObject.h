@@ -36,5 +36,7 @@ namespace Arkanoid
 				shape.setTexture(&texture);
 			}
 		}
+
+		virtual void destroy() { deactivate(); }
 	};
 }

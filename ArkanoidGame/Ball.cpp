@@ -42,6 +42,21 @@ namespace Arkanoid
 		}
 	}
 
+	void Ball::move(float offsetX, float offsetY)
+	{
+		shape.move(offsetX, offsetY);
+	}
+	void Ball::normalizeSpeed()
+	{
+		float len = std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+		if (len != 0.f)
+		{
+			float targetSpeed = speed; // твоя постоянная скорость
+			velocity.x = (velocity.x / len) * targetSpeed;
+			velocity.y = (velocity.y / len) * targetSpeed;
+		}
+	}
+
 	void Ball::reset()
 	{
 		isLost = false;
