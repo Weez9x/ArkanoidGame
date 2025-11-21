@@ -43,6 +43,24 @@
     <ClCompile Include="CrackedBrick.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="BonusFactory.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="BonusEffectManager.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="FireballBonus.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GhostBallBonus.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformSizeBonus.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="LifeBonus.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -79,6 +97,30 @@
       <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="GameStateWin.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="BonusFactory.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="Bonus.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="BonusEffectManager.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="FireballBonus.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="GhostBallBonus.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="LifeBonus.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="LifeSystem.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformSizeBonus.h">
       <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>

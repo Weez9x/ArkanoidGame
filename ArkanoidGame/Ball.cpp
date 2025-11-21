@@ -1,67 +1,122 @@
 #include "Ball.h"
+#include "GameSettings.h"
 
 namespace Arkanoid
 {
-	Ball::Ball(float x, float y)
-	{
-		shape.setSize({ BALL_RADIUS * 2, BALL_RADIUS * 2 });
-		//shape.setFillColor(sf::Color::White);
-		shape.setOrigin(BALL_RADIUS, BALL_RADIUS);
-		shape.setPosition(x, y);
-		setTexture(TEXTURES_PATH + "ball.png");
-		velocity = { BALL_SPEED, -BALL_SPEED };
-	}
+    Ball::Ball(float x, float y)
+    {
+        shape.setSize({ BALL_RADIUS * 2.f, BALL_RADIUS * 2.f });
+        shape.setOrigin(BALL_RADIUS, BALL_RADIUS);
+        shape.setPosition(x, y);
+        setTexture(TEXTURES_PATH + "ball.png");
 
-	void Ball::update(float dt, const sf::FloatRect& platformBounds)
-	{
-		if (!active) return;
+        baseSpeed = BALL_SPEED;
+        velocity = { baseSpeed, -baseSpeed };
+    }
 
-		auto pos = shape.getPosition();
-		pos += velocity * dt;
-		shape.setPosition(pos);
+    void Ball::update(float dt, const sf::FloatRect& platformBounds)
+    {
+        if (!active) return;
 
-		// От стен
-		if (pos.x - BALL_RADIUS <= 0.f || pos.x + BALL_RADIUS >= SCREEN_WIDTH)
-			reflectX();
-		if (pos.y - BALL_RADIUS <= 0.f)
-			reflectY();
+        auto pos = shape.getPosition();
+        pos += velocity * dt;
+        shape.setPosition(pos);
 
-		// Потеря шара
-		if (pos.y > SCREEN_HEIGHT)
-			isLost = true;
+        if (pos.x - BALL_RADIUS <= 0.f)
+        {
+            pos.x = BALL_RADIUS;
+            reflectX();
+            shape.setPosition(pos);
+        }
+        else if (pos.x + BALL_RADIUS >= SCREEN_WIDTH)
+        {
+            pos.x = SCREEN_WIDTH - BALL_RADIUS;
+            reflectX();
+            shape.setPosition(pos);
+        }
 
-		// От платформы
-		if (shape.getGlobalBounds().intersects(platformBounds))
-		{
-			reflectY();
+        if (pos.y - BALL_RADIUS <= 0.f)
+        {
+            pos.y = BALL_RADIUS;
+            reflectY();
+            shape.setPosition(pos);
+        }
 
-			// изменяем направление X в зависимости от точки удара по платформе
-			float platformCenter = platformBounds.left + platformBounds.width / 2.f;
-			float hitPos = (pos.x - platformCenter) / (PLATFORM_WIDTH / 2.f);
-			velocity.x = BALL_SPEED * hitPos;
-		}
-	}
+        if (pos.y - BALL_RADIUS > SCREEN_HEIGHT)
+        {
+            isLost = true;
+        }
 
-	void Ball::move(float offsetX, float offsetY)
-	{
-		shape.move(offsetX, offsetY);
-	}
-	void Ball::normalizeSpeed()
-	{
-		float len = std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-		if (len != 0.f)
-		{
-			float targetSpeed = speed; // твоя постоянная скорость
-			velocity.x = (velocity.x / len) * targetSpeed;
-			velocity.y = (velocity.y / len) * targetSpeed;
-		}
-	}
+        sf::FloatRect ballBounds = getBounds();
+        if (ballBounds.intersects(platformBounds))
+        {
+            float platformCenter = platformBounds.left + platformBounds.width / 2.f;
+            float ballCenter = ballBounds.left + ballBounds.width / 2.f;
+            float hitFactor = (ballCenter - platformCenter) / (platformBounds.width / 2.f);
 
-	void Ball::reset()
-	{
-		isLost = false;
-		active = true;
-		shape.setPosition(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT / 2.f);
-		velocity = { BALL_SPEED, -BALL_SPEED };
-	}
+            const float MAX_ANGLE = 75.f * 3.14159265f / 180.f;
+            float angle = hitFactor * MAX_ANGLE;
+
+            float speed = getSpeed();
+            if (speed < 1.f) speed = baseSpeed;
+
+            velocity.x = speed * std::sin(angle);
+            velocity.y = -speed * std::cos(angle);
+
+            shape.move(0.f, -2.f);
+        }
+    }
+
+    void Ball::reset()
+    {
+        isLost = false;
+        active = true;
+        shape.setPosition(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT / 2.f);
+
+        baseSpeed = BALL_SPEED;
+        velocity = { baseSpeed, -baseSpeed };
+
+        fireballMode = false;
+        ghostMode = false;
+        setTexture(TEXTURES_PATH + "ball.png");
+    }
+
+    void Ball::reflectX()
+    {
+        velocity.x *= -1.f;
+        normalizeSpeed();
+    }
+
+    void Ball::reflectY()
+    {
+        velocity.y *= -1.f;
+        normalizeSpeed();
+    }
+
+    void Ball::enableFireball()
+    {
+        fireballMode = true;
+        setTexture(TEXTURES_PATH + "ball bonus fire.png");
+        velocity.x *= 1.4f;
+        velocity.y *= 1.4f;
+    }
+
+    void Ball::disableFireball()
+    {
+        fireballMode = false;
+        setTexture(TEXTURES_PATH + "ball.png");
+        normalizeSpeed();
+    }
+
+    void Ball::enableGhost()
+    {
+        ghostMode = true;
+        setTexture(TEXTURES_PATH + "ball bonus ghos.png"); // файл так и называется
+    }
+
+    void Ball::disableGhost()
+    {
+        ghostMode = false;
+        setTexture(TEXTURES_PATH + "ball.png");
+    }
 }

@@ -4,42 +4,45 @@
 
 namespace Arkanoid
 {
-	CrackedBrick::CrackedBrick(float x, float y, float width, float height, int typeIndex)
-		: Brick(x, y, width, height, typeIndex)
-	{
-		// Загружаем треснутую текстуру, если есть
-		static const std::vector<std::string> crackedNames =
-		{
-			"Blue broken.png",
-			"green broken.png",
-			"yellow broken.png",
-			"orange broken.png",
-			"red broken.png"
-		};
+    CrackedBrick::CrackedBrick(float x, float y, float width, float height, int typeIndex)
+        : Brick(x, y, width, height, typeIndex)
+    {
+        static const std::vector<std::string> crackedNames =
+        {
+            "blue broken.png",
+            "green broken.png",
+            "yellow broken.png",
+            "orange broken.png",
+            "red broken.png"
+        };
 
-		if (typeIndex >= 0 && typeIndex < (int)crackedNames.size())
-		{
-			if (!crackedTexture.loadFromFile(TEXTURES_PATH + crackedNames[typeIndex]))
-			{
-				std::cerr << "Ошибка загрузки " << crackedNames[typeIndex] << std::endl;
-			}
-		}
-	}
+        int idx = typeIndex;
 
-	void CrackedBrick::destroy()
-	{
-		hitsRemaining--;
+        if (idx < 0) idx = 0;
+        if (idx >= (int)crackedNames.size())
+            idx = (int)crackedNames.size() - 1;
 
-		if (hitsRemaining == 1 && !cracked)
-		{
-			// Меняем на треснутую текстуру
-			if (crackedTexture.getSize().x > 0)
-				shape.setTexture(&crackedTexture);
-			cracked = true;
-		}
-		else if (hitsRemaining <= 0)
-		{
-			active = false;
-		}
-	}
+        std::string fullPath = TEXTURES_PATH + crackedNames[idx];
+        if (!crackedTexture.loadFromFile(fullPath))
+        {
+            std::cerr << "Failed to load cracked texture: " << fullPath << std::endl;
+        }
+    }
+
+    void CrackedBrick::destroy()
+    {
+        hitsRemaining--;
+
+        if (hitsRemaining == 1 && !cracked)
+        {
+            if (crackedTexture.getSize().x > 0)
+                shape.setTexture(&crackedTexture);
+
+            cracked = true;
+        }
+        else if (hitsRemaining <= 0)
+        {
+            active = false;
+        }
+    }
 }

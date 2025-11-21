@@ -1,40 +1,61 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <memory>
+
+#include "GameState.h"
 #include "Platform.h"
 #include "Ball.h"
 #include "Brick.h"
-#include "GameState.h"
+#include "Bonus.h"
+#include "BonusEffectManager.h"
+#include "LifeSystem.h"
 
 namespace Arkanoid
 {
-	class GameStatePlaying : public GameState
-	{
-	private:
-		Platform platform;
-		Ball ball;
-		std::vector<std::unique_ptr<GameObject>> bricks;
-		sf::Font font;
-		sf::Text infoText;
+    class GameStatePlaying : public GameState
+    {
+    private:
+        Platform platform;
+        Ball ball;
 
-		bool isGameOver = false;
-		bool requestToMainMenu = false;
-		bool isWin = false;
+        std::vector<std::unique_ptr<GameObject>> bricks;
+        std::vector<std::unique_ptr<Bonus>> bonuses;
 
+        BonusEffectManager effectManager;
+        LifeSystem lifeSystem;
 
-		void buildBricks();
+        sf::Font font;
+        sf::Text infoText;
+        sf::Text livesText;
+        sf::Text scoreText;
+        sf::Text bonusText;
 
-	public:
-		GameStatePlaying();
-		~GameStatePlaying() override = default;
+        bool isGameOver = false;
+        bool isWin = false;
+        bool requestToMainMenu = false;
 
-		void onEnter() override;
-		void handleEvent(const sf::Event& event) override;
-		void update(float dt) override;
-		void draw(sf::RenderWindow& window) override;
+        int score = 0;
 
-		bool gameOver() const { return isGameOver; }
-		bool shouldGoToMainMenu() const { return requestToMainMenu; }
-		bool gameWin() const { return isWin; }
-	};
+        void buildBricks();
+        void trySpawnBonus(const sf::FloatRect& blockBounds);
+
+    public:
+        GameStatePlaying();
+        ~GameStatePlaying() override = default;
+
+        void onEnter() override;
+        void handleEvent(const sf::Event& event) override;
+        void update(float dt) override;
+        void draw(sf::RenderWindow& window) override;
+
+        bool gameOver() const { return isGameOver; }
+        bool gameWin() const { return isWin; }
+        bool shouldGoToMainMenu() const { return requestToMainMenu; }
+
+        LifeSystem& getLifeSystem() { return lifeSystem; }
+
+        void addScore(int v) { score += v; }
+        int getScore() const { return score; }
+    };
 }

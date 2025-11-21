@@ -13,6 +13,7 @@ namespace Arkanoid
 
 	public:
 		Application();
+		~Application();
 		void run();
 	};
 }

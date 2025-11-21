@@ -52,7 +52,6 @@ namespace Arkanoid
 		{
 			if (event.key.code == sf::Keyboard::Escape && currentType == StateType::MainMenu)
 			{
-				Arkanoid::Brick::unloadTextures();
 				// Exit from the game
 				changeStateInternal(StateType::None);
 				return;

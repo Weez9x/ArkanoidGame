@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "GameSettings.h"
+#include "Brick.h"
 
 namespace Arkanoid
 {
@@ -8,6 +9,10 @@ namespace Arkanoid
 	{
 		window.setFramerateLimit(60);
 		game.init();
+	}
+	Application::~Application()
+	{
+		Arkanoid::Brick::unloadTextures();
 	}
 
 	void Application::run()

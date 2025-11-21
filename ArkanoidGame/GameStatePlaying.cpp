@@ -1,189 +1,258 @@
-#include "GameStatePlaying.h"
+п»ї#include "GameStatePlaying.h"
 #include "GameSettings.h"
 #include "CrackedBrick.h"
+#include "BonusFactory.h"
 #include <cstdlib>
-#include <cassert>
+#include <cmath>
 
 namespace Arkanoid
 {
-	GameStatePlaying::GameStatePlaying()
-		: platform(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT - 50.f),
-		ball(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT / 2.f)
-	{
-		buildBricks();
-	}
+    GameStatePlaying::GameStatePlaying()
+        : platform(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT - 50.f),
+        ball(SCREEN_WIDTH / 2.f, SCREEN_HEIGHT / 2.f)
+    {
+        lifeSystem.reset(1);
+        buildBricks();
+    }
 
-	void GameStatePlaying::onEnter()
-	{
+    void GameStatePlaying::onEnter()
+    {
+        font.loadFromFile(FONTS_PATH + "Roboto-Regular.ttf");
 
-		if (!font.loadFromFile(FONTS_PATH + "Roboto-Regular.ttf"))
-		{
+        infoText.setFont(font);
+        infoText.setCharacterSize(18);
+        infoText.setFillColor(sf::Color::White);
+        infoText.setPosition(10.f, 10.f);
+        infoText.setString("ESC - to menu");
 
-		}
-		infoText.setFont(font);
-		infoText.setCharacterSize(18);
-		infoText.setString("ESC - to menu");
-		infoText.setFillColor(sf::Color::White);
-	}
+        livesText.setFont(font);
+        livesText.setCharacterSize(18);
+        livesText.setFillColor(sf::Color::White);
+        livesText.setPosition(150.f, 10.f);
 
-	void GameStatePlaying::handleEvent(const sf::Event& event)
-	{
-		if (event.type == sf::Event::KeyPressed)
-		{
-			if (event.key.code == sf::Keyboard::Escape)
-			{
-				requestToMainMenu = true;
-			}
-		}
-	}
+        scoreText.setFont(font);
+        scoreText.setCharacterSize(18);
+        scoreText.setFillColor(sf::Color::White);
+        scoreText.setPosition(250.f, 10.f);
+
+        bonusText.setFont(font);
+        bonusText.setCharacterSize(18);
+        bonusText.setFillColor(sf::Color::Cyan);
+        bonusText.setPosition(500.f, 10.f);
+    }
+
+    void GameStatePlaying::handleEvent(const sf::Event& event)
+    {
+        if (event.type == sf::Event::KeyPressed)
+        {
+            if (event.key.code == sf::Keyboard::Escape)
+                requestToMainMenu = true;
+        }
+    }
+
+    void GameStatePlaying::trySpawnBonus(const sf::FloatRect& blockBounds)
+    {
+        if (std::rand() % 100 < 10)
+        {
+            float bx = blockBounds.left + blockBounds.width / 2.f;
+            float by = blockBounds.top + blockBounds.height / 2.f;
+
+            auto bonus = BonusFactory::createRandomBonus(bx, by);
+            if (bonus)
+                bonuses.emplace_back(std::move(bonus));
+        }
+    }
 
     void GameStatePlaying::update(float dt)
     {
-        if (isGameOver || isWin)
-            return;
+        if (isGameOver || isWin) return;
 
-        //обновляем движение платформы и шара
+        effectManager.update(dt, ball, platform, *this);
+
         platform.update(dt);
         ball.update(dt, platform.getBounds());
 
-        //прогноз следующего положения шара
-        sf::FloatRect nextPos = ball.getBounds();
-        sf::Vector2f velocity = ball.getVelocity();
-        nextPos.left += velocity.x * dt;
-        nextPos.top += velocity.y * dt;
+        sf::FloatRect ballBounds = ball.getBounds();
 
-        //проверка коллизий с кирпичами
+        // РѕР±РЅРѕРІР»СЏРµРј Р±РѕРЅСѓСЃС‹ (РїР°РґРµРЅРёРµ Рё РїРѕРґР±РѕСЂ)
+        for (auto& b : bonuses)
+        {
+            if (!b->isActive()) continue;
+
+            b->update(dt);
+
+            sf::FloatRect platformBounds = platform.getBounds();
+            sf::FloatRect topHalf = platformBounds;
+            topHalf.height *= 0.5f;
+
+            if (b->getBounds().intersects(topHalf))
+            {
+                b->applyEffect(effectManager, ball, platform, *this);
+                b->deactivate();
+            }
+            else if (b->getBounds().top > SCREEN_HEIGHT)
+            {
+                b->deactivate();
+            }
+        }
+
+        // РїСЂРѕРіРЅРѕР· СЃР»РµРґСѓСЋС‰РµРіРѕ РїРѕР»РѕР¶РµРЅРёСЏ
+        sf::FloatRect nextPos = ballBounds;
+        sf::Vector2f vel = ball.getVelocity();
+        nextPos.left += vel.x * dt;
+        nextPos.top += vel.y * dt;
+
+        // СЃС‚РѕР»РєРЅРѕРІРµРЅРёРµ СЃ РєРёСЂРїРёС‡Р°РјРё
         for (auto& brick : bricks)
         {
-            if (!brick->isActive())
-                continue;
+            if (!brick->isActive()) continue;
 
-            sf::FloatRect brickBounds = brick->getBounds();
+            sf::FloatRect br = brick->getBounds();
 
-            if (nextPos.intersects(brickBounds))
+            if (nextPos.intersects(br))
             {
-                // Разрушаем блок (CrackedBrick сам решит, ломаться или трескаться)
+                // Fireball: СѓР±РёРІР°РµРј СЌС‚РѕС‚ Рё РґРѕ 3 СЃРѕСЃРµРґРЅРёС…
+                if (ball.isFireball())
+                {
+                    int destroyed = 0;
+                    for (auto& b2 : bricks)
+                    {
+                        if (!b2->isActive()) continue;
+                        sf::FloatRect br2 = b2->getBounds();
+
+                        // РІ РЅРµР±РѕР»СЊС€РѕР№ РѕРєСЂРµСЃС‚РЅРѕСЃС‚Рё
+                        if (std::abs(br2.top - br.top) <= BRICK_HEIGHT &&
+                            std::abs(br2.left - br.left) <= BRICK_WIDTH * 1.5f)
+                        {
+                            b2->destroy();
+                            addScore(50);
+                            destroyed++;
+                            if (destroyed >= 4) break;
+                        }
+                    }
+                    trySpawnBonus(br);
+                    ball.reflectY();
+                    break;
+                }
+
+                // Ghost ball: СЂР°Р·СЂСѓС€Р°РµС‚ Рё Р»РµС‚РёС‚ РґР°Р»СЊС€Рµ Р±РµР· РѕС‚СЂР°Р¶РµРЅРёСЏ
+                if (ball.isGhost())
+                {
+                    brick->destroy();
+                    addScore(10);
+                    trySpawnBonus(br);
+                    continue;
+                }
+
+                // РѕР±С‹С‡РЅС‹Р№ РјСЏС‡
                 brick->destroy();
+                addScore(10);
+                trySpawnBonus(br);
 
-                //расчёт сторон пересечения
-                sf::FloatRect ballBounds = ball.getBounds();
-                float ballLeft = ballBounds.left;
-                float ballRight = ballBounds.left + ballBounds.width;
-                float ballTop = ballBounds.top;
-                float ballBottom = ballBounds.top + ballBounds.height;
+                sf::FloatRect bb = ball.getBounds();
 
-                float brickLeft = brickBounds.left;
-                float brickRight = brickBounds.left + brickBounds.width;
-                float brickTop = brickBounds.top;
-                float brickBottom = brickBounds.top + brickBounds.height;
-
-                float overlapLeft = ballRight - brickLeft;
-                float overlapRight = brickRight - ballLeft;
-                float overlapTop = ballBottom - brickTop;
-                float overlapBottom = brickBottom - ballTop;
+                float overlapLeft = (bb.left + bb.width) - br.left;
+                float overlapRight = (br.left + br.width) - bb.left;
+                float overlapTop = (bb.top + bb.height) - br.top;
+                float overlapBottom = (br.top + br.height) - bb.top;
 
                 bool fromLeft = std::abs(overlapLeft) < std::abs(overlapRight);
                 bool fromTop = std::abs(overlapTop) < std::abs(overlapBottom);
+
                 float minOverlapX = fromLeft ? overlapLeft : -overlapRight;
                 float minOverlapY = fromTop ? overlapTop : -overlapBottom;
 
-                //определяем направление отражения
                 if (std::abs(minOverlapX) < std::abs(minOverlapY))
-                {
                     ball.reflectX();
-                    ball.move(minOverlapX * 0.5f, 0.f);
-                }
                 else
-                {
                     ball.reflectY();
-                    ball.move(0.f, minOverlapY * 0.5f);
-                }
+
                 break;
             }
         }
 
-        sf::FloatRect ballBounds = ball.getBounds();
-        sf::FloatRect platformBounds = platform.getBounds();
-
-        if (ballBounds.intersects(platformBounds))
+        // РїРѕР±РµРґР°?
+        bool allDead = true;
+        for (auto& b : bricks)
         {
-            float platformCenter = platformBounds.left + platformBounds.width / 2.f;
-            float ballCenter = ballBounds.left + ballBounds.width / 2.f;
-            float hitFactor = (ballCenter - platformCenter) / (platformBounds.width / 2.f);
-
-            // плавный контроль угла отскока
-            const float MAX_ANGLE = 75.f * 3.14159265f / 180.f;
-            float angle = hitFactor * MAX_ANGLE;
-
-            float speed = ball.getSpeed();
-            ball.setVelocity(
-                speed * std::sin(angle),
-                -speed * std::cos(angle)
-            );
-
-            // чуть сдвигаем вверх, чтобы не застрял
-            ball.move(0.f, -2.f);
-        }
-
-        //проверка победы
-        bool allDestroyed = true;
-        for (const auto& brick : bricks)
-        {
-            if (brick->isActive())
+            if (b->isActive())
             {
-                allDestroyed = false;
+                allDead = false;
                 break;
             }
         }
-        if (allDestroyed)
+        if (allDead)
             isWin = true;
 
-        //проверка проигрыша
+        // РїСЂРѕРІРµСЂРєР° РїРѕС‚РµСЂРё С€Р°СЂР°
         if (ball.lost())
-            isGameOver = true;
+        {
+            if (lifeSystem.consumeLife())
+            {
+                ball.reset();
+                platform.reset();
+            }
+            else
+            {
+                isGameOver = true;
+            }
+        }
+
+        // HUD
+        livesText.setString("Lives: " + std::to_string(lifeSystem.getLives()));
+        scoreText.setString("Score: " + std::to_string(score));
+
+        if (effectManager.hasActiveBonus())
+        {
+            int t = static_cast<int>(std::ceil(effectManager.getRemainingTime()));
+            bonusText.setString("Bonus: " + effectManager.getActiveBonusName() +
+                " (" + std::to_string(t) + "s)");
+        }
+        else
+        {
+            bonusText.setString("Bonus: None");
+        }
     }
 
+    void GameStatePlaying::draw(sf::RenderWindow& window)
+    {
+        platform.draw(window);
+        ball.draw(window);
 
-	void GameStatePlaying::draw(sf::RenderWindow& window)
-	{
-		platform.draw(window);
-		ball.draw(window);
+        for (auto& brick : bricks)
+            brick->draw(window);
 
-		for (const auto& brick : bricks)
-			brick->draw(window);
+        for (auto& b : bonuses)
+            b->draw(window);
 
-		// HUD
-		infoText.setPosition(10.f, 10.f);
-		window.draw(infoText);
-	}
+        window.draw(infoText);
+        window.draw(livesText);
+        window.draw(scoreText);
+        window.draw(bonusText);
+    }
 
-	void GameStatePlaying::buildBricks()
-	{
-		bricks.clear();
-		const float gap = 5.f;
-		float totalWidth = BRICK_COLUMNS * BRICK_WIDTH + (BRICK_COLUMNS - 1) * gap;
-		float startX = (SCREEN_WIDTH - totalWidth) / 2.f + BRICK_WIDTH / 2.f;
-		float startY = 80.f;
+    void GameStatePlaying::buildBricks()
+    {
+        bricks.clear();
 
-		for (int i = 0; i < BRICK_ROWS; ++i)
-		{
-			for (int j = 0; j < BRICK_COLUMNS; ++j)
-			{
-				float x = startX + j * (BRICK_WIDTH + gap);
-				float y = startY + i * (BRICK_HEIGHT + gap);
-				int typeIndex = i % 5;
+        const float gap = 5.f;
+        float totalWidth = BRICK_COLUMNS * BRICK_WIDTH + (BRICK_COLUMNS - 1) * gap;
+        float startX = (SCREEN_WIDTH - totalWidth) / 2.f + BRICK_WIDTH / 2.f;
+        float startY = 80.f;
 
-				// каждый 3-й блок будет "CrackedBrick"
-				if ((i + j) % 4 == 0)
-				{
-					bricks.emplace_back(std::make_unique<CrackedBrick>(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex));
-				}
-				else
-				{
-					bricks.emplace_back(std::make_unique<Brick>(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex));
-				}
-			}
-		}
-	}
+        for (int i = 0; i < BRICK_ROWS; ++i)
+        {
+            for (int j = 0; j < BRICK_COLUMNS; ++j)
+            {
+                float x = startX + j * (BRICK_WIDTH + gap);
+                float y = startY + i * (BRICK_HEIGHT + gap);
+                int typeIndex = i % 5;
 
+                if ((i + j) % 4 == 0)
+                    bricks.emplace_back(std::make_unique<CrackedBrick>(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex));
+                else
+                    bricks.emplace_back(std::make_unique<Brick>(x, y, BRICK_WIDTH, BRICK_HEIGHT, typeIndex));
+            }
+        }
+    }
 }
